@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Supplier</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-4">
+        <h1>Select a Supplier</h1>
+        <form th:action="@{/select-supplier}" method="post">
+            <div class="form-group">
+                <label for="supplier">Supplier</label>
+                <select class="form-control" id="supplier" name="supplier" required>
+                    <option value="">-- Select a Supplier --</option>
+                    <option th:each="supplier : ${suppliers}" th:value="${supplier.name}" th:text="${supplier.name}"></option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Select</button>
+        </form>
+    </div>
+</body>
+</html>

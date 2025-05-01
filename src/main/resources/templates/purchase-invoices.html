@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Invoices (Accounting Mode)</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-4">
+        <h1>Purchase Invoices (Accounting Mode)</h1>
+        <div th:if="${selectedSupplier != null}">
+            <p>Selected Supplier: <span th:text="${selectedSupplier}"></span></p>
+        </div>
+        <div class="mb-3">
+            <a href="/accounting" class="btn btn-primary mr-2">All</a>
+            <a href="/accounting?status=payé" class="btn btn-secondary">Paid (payé)</a>
+            <a href="/suppliers" class="btn btn-info float-right">Change Supplier</a>
+        </div>
+        <div th:if="${statusFilter != null}">
+            <p>Filtering by status: <span th:text="${statusFilter}"></span></p>
+        </div>
+        <div th:if="${purchaseInvoices.isEmpty()}">
+            <p>No purchase invoices found.</p>
+        </div>
+        <div th:unless="${purchaseInvoices.isEmpty()}">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Supplier</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="invoice : ${purchaseInvoices}">
+                        <td th:text="${invoice.name}"></td>
+                        <td th:text="${invoice.supplier}"></td>
+                        <td th:text="${invoice.status}"></td>
+                        <td>
+                            <form th:action="@{/mark-invoice-paid}" method="post" th:if="${invoice.status != 'Paid'}">
+                                <input type="hidden" name="invoiceId" th:value="${invoice.name}">
+                                <button type="submit" class="btn btn-sm btn-success">Mark as Paid</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Purchase Orders</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-4">
+        <h1>Purchase Orders</h1>
+        <div th:if="${selectedSupplier != null}">
+            <p>Selected Supplier: <span th:text="${selectedSupplier}"></span></p>
+        </div>
+        <div class="mb-3">
+            <a href="/purchase-orders" class="btn btn-primary mr-2">All</a>
+            <a href="/purchase-orders?status=reçu" class="btn btn-secondary mr-2">Received (reçu)</a>
+            <a href="/purchase-orders?status=payé" class="btn btn-secondary">Paid (payé)</a>
+            <a href="/suppliers" class="btn btn-info float-right">Change Supplier</a>
+        </div>
+        <div th:if="${statusFilter != null}">
+            <p>Filtering by status: <span th:text="${statusFilter}"></span></p>
+        </div>
+        <div th:if="${purchaseOrders.isEmpty()}">
+            <p>No purchase orders found.</p>
+        </div>
+        <div th:unless="${purchaseOrders.isEmpty()}">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Supplier</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${purchaseOrders}">
+                        <td th:text="${order.name}"></td>
+                        <td th:text="${order.supplier}"></td>
+                        <td th:text="${order.status}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
