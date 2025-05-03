@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Requests for Quotation</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-4">
+        <h1>Requests for Quotation</h1>
+        <div th:if="${param.error}" class="alert alert-danger">
+            <span th:text="${param.errorMessage}"></span>
+        </div>
+        <!-- Check if rfqs is empty or null -->
+        <div th:if="${rfqs == null or rfqs.isEmpty()}" class="alert alert-info">
+            No requests for quotation found.
+        </div>
+        <div th:unless="${rfqs == null or rfqs.isEmpty()}">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Supplier</th>
+                        <th>Item Code</th>
+                        <th>Rate</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="rfq : ${rfqs}">
+                        <td th:text="${rfq['name'] != null ? rfq['name'] : 'N/A'}"></td>
+                        <!-- Using supplier_name as it's a common field in ERPNext for RFQs -->
+                        <!-- Adjust to rfq['supplier'] or another field based on your API response logs -->
+                        <td th:text="${rfq['supplier_name'] != null ? rfq['supplier_name'] : 'N/A'}"></td>
+                        <td>
+                            <ul>
+                                <li th:each="item : ${rfq['items']}" th:text="${item['item_code'] != null ? item['item_code'] : 'N/A'} + ': ' + ${item['rate'] != null ? item['rate'] : 'N/A'}"></li>
+                            </ul>
+                        </td>
+                        <td></td>
+                        <td>
+                            <form th:action="@{/update-price}" method="post" style="display:inline;">
+                                <input type="hidden" name="rfqName" th:value="${rfq['name']}"/>
+                                <input type="text" name="itemCode" placeholder="Item Code" required/>
+                                <input type="number" step="0.01" name="newPrice" placeholder="New Price" required/>
+                                <button type="submit" class="btn btn-sm btn-primary">Update Price</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+</body>
+</html>

@@ -1,12 +1,12 @@
 package com.newApp.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.newApp.model.ErpNextClient;
 import com.newApp.model.Supplier;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ErpNextService {
@@ -18,19 +18,26 @@ public class ErpNextService {
     }
 
     public List<Supplier> fetchSuppliers() {
-        try {
-            JsonNode response = erpNextClient.getSuppliers();
-            List<Supplier> suppliers = new ArrayList<>();
+        return erpNextClient.getSuppliers();
+    }
 
-            if (response.has("data")) {
-                for (JsonNode node : response.get("data")) {
-                    String name = node.get("name").asText();
-                    suppliers.add(new Supplier(name));
-                }
-            }
-            return suppliers;
-        } catch (NoSuchMethodError e) {
-            throw new RuntimeException("ErpNextClient.getSuppliers() method is not available. Please ensure ErpNextClient.java is updated.", e);
-        }
+    public List<Map<String, Object>> fetchRequestsForQuotation() {
+        return erpNextClient.getRequestsForQuotation();
+    }
+
+    public String updatePrice(String rfqName, String itemCode, double newPrice) {
+        return erpNextClient.updatePrice(rfqName, itemCode, newPrice);
+    }
+
+    public List<Map<String, Object>> fetchPurchaseOrders() {
+        return erpNextClient.getPurchaseOrders();
+    }
+
+    public List<Map<String, Object>> fetchPurchaseInvoices() {
+        return erpNextClient.getPurchaseInvoices();
+    }
+
+    public String updateInvoiceStatus(String invoiceName, String status) {
+        return erpNextClient.updateInvoiceStatus(invoiceName, status);
     }
 }

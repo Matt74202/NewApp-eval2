@@ -45,14 +45,27 @@
             <artifactId>httpclient5</artifactId>
             <version>5.3.1</version>
         </dependency>
+		<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-devtools</artifactId>
+    <optional>true</optional>
+</dependency>
+
     </dependencies>
 
     <build>
-        <plugins>
+        <plugins>	
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+			 <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+            <configuration>
+                <fork>true</fork>
+            </configuration>
+        	</plugin>
         </plugins>
     </build>
 </project>
