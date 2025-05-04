@@ -15,12 +15,13 @@
             --erpnext-light-text: #8d99a6;
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-            color: var(--erpnext-text);
-            background-color: var(--erpnext-light-bg);
+        body, html {
+            height: 100%;
             margin: 0;
             padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            background-color: var(--erpnext-light-bg);
+            color: var(--erpnext-text);
         }
 
         .navbar {
@@ -33,33 +34,31 @@
             font-weight: 600;
             color: var(--erpnext-blue);
         }
-        
+
         .user-controls {
             display: flex;
             align-items: center;
         }
-        
+
         .user-info {
             display: flex;
             align-items: center;
             margin-right: 15px;
-            color: var(--erpnext-text);
             font-size: 14px;
         }
-        
+
         .user-icon {
             margin-right: 6px;
-            font-size: 16px;
         }
-        
+
         .username {
             font-weight: 500;
         }
-        
+
         .logout-form {
             margin: 0;
         }
-        
+
         .logout-btn {
             color: var(--erpnext-blue);
             border-color: var(--erpnext-blue);
@@ -68,7 +67,7 @@
             padding: 4px 12px;
             transition: all 0.2s;
         }
-        
+
         .logout-btn:hover {
             background-color: var(--erpnext-blue);
             color: white;
@@ -102,120 +101,99 @@
         .sidebar-menu a {
             color: var(--erpnext-text);
             text-decoration: none;
-            display: block;
         }
 
         .main-content {
             margin-left: 250px;
-            padding: 20px 30px;
+            padding: 40px 30px;
+            min-height: calc(100vh - 56px);
+            display: flex;
+            flex-direction: column;
         }
 
-        .page-header {
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--erpnext-border);
-        }
-        
-        h1 {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--erpnext-text);
+        .dashboard-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
 
-        .alert {
-            border-radius: 4px;
-            border: none;
-        }
-
-        .btn-primary {
-            background-color: var(--erpnext-blue);
-            border-color: var(--erpnext-blue);
-            border-radius: 4px;
-            font-weight: 500;
-            padding: 6px 12px;
-            transition: background-color 0.2s;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--erpnext-dark-blue);
-            border-color: var(--erpnext-dark-blue);
-        }
-
-        .card {
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--erpnext-border);
-            margin-bottom: 20px;
-        }
-
-        .card-header {
-            background-color: rgba(245, 247, 250, 0.8);
-            border-bottom: 1px solid var(--erpnext-border);
-            font-weight: 600;
-            padding: 12px 15px;
-        }
-
-        .actions-container {
+        .dashboard-card {
             background-color: #fff;
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
             border: 1px solid var(--erpnext-border);
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--erpnext-blue);
+            text-decoration: none;
+            transition: transform 0.2s, background-color 0.2s;
         }
 
-        .dashboard-link {
-            display: inline-block;
-            margin-right: 10px;
-            margin-bottom: 10px;
+        .dashboard-card:hover {
+            background-color: rgba(94, 100, 255, 0.05);
+            transform: translateY(-2px);
         }
+
+        .welcome-message {
+        background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+        padding: 25px 40px;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--erpnext-text);
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .welcome-message .highlight {
+        color: var(--erpnext-blue);
+    }
+        
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">ERP System</a>
-            <div class="user-controls">
-                <!-- Afficher l'utilisateur connecté avec Thymeleaf Security -->
-                <span class="user-info" sec:authorize="isAuthenticated()">
-                    <i class="user-icon">👤</i>
-                    <span class="username" sec:authentication="name">User</span>
-                </span>
-                <!-- Formulaire de déconnexion pour Spring Security -->
-                <form th:action="@{/logout}" method="post" class="logout-form">
-                    <button type="submit" class="btn btn-outline-primary btn-sm logout-btn">Logout</button>
-                </form>
-            </div>
+<nav class="navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">ERP System</a>
+        <div class="user-controls">
+            <span class="user-info" sec:authorize="isAuthenticated()">
+                <i class="user-icon">👤</i>
+                <span class="username" sec:authentication="name">User</span>
+            </span>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="btn btn-outline-primary btn-sm logout-btn">Logout</button>
+            </form>
         </div>
-    </nav>
-
-    <div class="sidebar">
-        <ul class="sidebar-menu">
-            <li class="active"><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/rfqs">Supplier Quotations</a></li>
-            <li><a href="/purchase-orders">Purchase Orders</a></li>
-            <li><a href="/purchase-invoices">Purchase Invoices</a></li>
-        </ul>
     </div>
+</nav>
+
+<div class="sidebar">
+    <ul class="sidebar-menu">
+        <li class="active"><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/rfqs">Supplier Quotations</a></li>
+        <li><a href="/purchase-orders">Purchase Orders</a></li>
+        <li><a href="/purchase-invoices">Purchase Invoices</a></li>
+    </ul>
+</div>
+
 
     <div class="main-content">
-        <div class="page-header">
-            <h1>Dashboard</h1>
+        <div class="dashboard-section">
+            <a href="/rfqs" class="dashboard-card">Supplier Quotations</a>
+            <a href="/purchase-orders" class="dashboard-card">Purchase Orders</a>
+            <a href="/purchase-invoices" class="dashboard-card">Purchase Invoices</a>
         </div>
-
-        <!-- Afficher les messages d'erreur -->
-        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-
-        <div class="actions-container">
-            <h5 class="mb-3">Quick Access</h5>
-            <div>
-                <a href="/rfqs" class="btn btn-primary dashboard-link">View Supplier Quotations</a>
-                <a href="/purchase-orders" class="btn btn-primary dashboard-link">View Purchase Orders</a>
-                <a href="/purchase-invoices" class="btn btn-primary dashboard-link">View Purchase Invoices</a>
-            </div>
+        <div class="welcome-message">
+            Bienvenue dans <span class="highlight">ERPNext</span>
         </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

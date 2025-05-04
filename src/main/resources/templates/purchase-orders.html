@@ -38,7 +38,7 @@
             display: flex;
             align-items: center;
         }
-        
+
         .user-info {
             display: flex;
             align-items: center;
@@ -46,20 +46,20 @@
             color: var(--erpnext-text);
             font-size: 14px;
         }
-        
+
         .user-icon {
             margin-right: 6px;
             font-size: 16px;
         }
-        
+
         .username {
             font-weight: 500;
         }
-        
+
         .logout-form {
             margin: 0;
         }
-        
+
         .logout-btn {
             color: var(--erpnext-blue);
             border-color: var(--erpnext-blue);
@@ -68,7 +68,7 @@
             padding: 4px 12px;
             transition: all 0.2s;
         }
-        
+
         .logout-btn:hover {
             background-color: var(--erpnext-blue);
             color: white;
@@ -115,7 +115,7 @@
             padding-bottom: 10px;
             border-bottom: 1px solid var(--erpnext-border);
         }
-        
+
         h1 {
             font-size: 24px;
             font-weight: 600;
@@ -222,84 +222,99 @@
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">ERP System</a>
-            <div class="user-controls">
-                <!-- Afficher l'utilisateur connecté avec Thymeleaf Security -->
-                <span class="user-info" sec:authorize="isAuthenticated()">
-                    <i class="user-icon">👤</i>
-                    <span class="username" sec:authentication="name">User</span>
-                </span>
-                <!-- Formulaire de déconnexion pour Spring Security -->
-                <form th:action="@{/logout}" method="post" class="logout-form">
-                    <button type="submit" class="btn btn-outline-primary btn-sm logout-btn">Logout</button>
-                </form>
-            </div>
+<nav class="navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">ERP System</a>
+        <div class="user-controls">
+            <span class="user-info" sec:authorize="isAuthenticated()">
+                <i class="user-icon">👤</i>
+                <span class="username" sec:authentication="name">User</span>
+            </span>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="btn btn-outline-primary btn-sm logout-btn">Logout</button>
+            </form>
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <div class="sidebar">
-        <ul class="sidebar-menu">
-            <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/rfqs">Supplier Quotations</a></li>
-            <li class="active"><a href="/purchase-orders">Purchase Orders</a></li>
-            <li><a href="/purchase-invoices">Purchase Invoices</a></li>
-        </ul>
+<div class="sidebar">
+    <ul class="sidebar-menu">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/rfqs">Supplier Quotations</a></li>
+        <li class="active"><a href="/purchase-orders">Purchase Orders</a></li>
+        <li><a href="/purchase-invoices">Purchase Invoices</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div class="page-header">
+        <h1>Commandes d'achat</h1>
     </div>
 
-    <div class="main-content">
-        <div class="page-header">
-            <h1>Commandes d'achat</h1>
-        </div>
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span th:text="${errorMessage}"></span>
+    </div>
 
-        <!-- Afficher les messages d'erreur -->
-        <div th:if="${errorMessage}" class="alert alert-danger">
-            <span th:text="${errorMessage}"></span>
-        </div>
-
-        <!-- Filtre fournisseur -->
-        <div class="filter-section">
-            <div class="row">
-                <div class="col-md-6">
-                    <label for="supplier" class="form-label">Filtrer par fournisseur</label>
-                    <select id="supplier" class="form-select" onchange="window.location.href='/purchase-orders?supplier=' + this.value">
-                        <option value="">Tous les fournisseurs</option>
-                        <option th:each="supplier : ${suppliers}" th:value="${supplier.name}" th:text="${supplier.name}"
-                                th:selected="${supplier.name == selectedSupplier}"></option>
-                    </select>
-                </div>
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-md-6">
+                <label for="supplier" class="form-label">Filtrer par fournisseur</label>
+                <select id="supplier" class="form-select" onchange="window.location.href='/purchase-orders?supplier=' + this.value">
+                    <option value="">Tous les fournisseurs</option>
+                    <option th:each="supplier : ${suppliers}" th:value="${supplier.name}" th:text="${supplier.name}"
+                            th:selected="${supplier.name == selectedSupplier}"></option>
+                </select>
             </div>
         </div>
-
-        <!-- Table des commandes -->
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Fournisseur</th>
-                    <th>Date</th>
-                    <th>Statut</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="order : ${orders}">
-                    <td th:text="${order.name}"></td>
-                    <td th:text="${order.supplier}"></td>
-                    <td th:text="${order.transaction_date}"></td>
-                    <td th:text="${order.status}"></td>
-                </tr>
-                <tr th:if="${orders.empty}">
-                    <td colspan="3" class="text-center">Aucune commande d'achat trouvée</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="page-count" th:if="${!orders.empty}">
-            <span th:text="${orders.size() + ' commandes trouvées'}"></span>
-        </div>
-        
-        <a href="/dashboard" class="btn btn-secondary back-link">Retour au tableau de bord</a>
     </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Fournisseur</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th>% Facturé</th>
+                <th>% Reçu</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="order : ${orders}">
+                <td th:text="${order.name}"></td>
+                <td th:text="${order.supplier}"></td>
+                <td th:text="${order.transaction_date}"></td>
+                <td th:text="${order.status}"></td>
+
+                <!-- Barre de progression % facturé -->
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-info" role="progressbar"
+                             th:style="'width:' + ${order.per_billed} + '%'" 
+                             th:text="${order.per_billed + '%'}"></div>
+                    </div>
+                </td>
+
+                <!-- Barre de progression % reçu -->
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar"
+                             th:style="'width:' + ${order.per_received} + '%'" 
+                             th:text="${order.per_received + '%'}"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr th:if="${orders.empty}">
+                <td colspan="6" class="text-center">Aucune commande d'achat trouvée</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-count" th:if="${!orders.empty}">
+        <span th:text="${orders.size() + ' commandes trouvées'}"></span>
+    </div>
+
+    <a href="/dashboard" class="btn btn-secondary back-link">Retour au tableau de bord</a>
+</div>
 </body>
 </html>
