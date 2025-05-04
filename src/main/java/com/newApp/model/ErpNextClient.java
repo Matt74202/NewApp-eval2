@@ -18,12 +18,9 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.MediaType;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -166,47 +163,6 @@ public class ErpNextClient {
         }
     }
 
-    // public List<Map<String, Object>> getRequestsForQuotation(String supplier) throws Exception {
-    //     if (!isSessionValid()) {
-    //         throw new IllegalStateException("No valid session. Please log in.");
-    //     }
-    
-    //     String fields = "[\"name\",\"title\",\"status\",\"supplier\",\"transaction_date\",\"grand_total\",\"items.name\",\"items.item_code\",\"items.item_name\",\"items.qty\",\"items.rate\",\"items.amount\",\"items.stock_uom\",\"items.uom\",\"items.conversion_factor\",\"items.base_rate\",\"items.base_amount\",\"items.warehouse\"]";
-    //     StringBuilder url = new StringBuilder(baseUrl + "resource/Supplier Quotation?fields=" + fields);
-    
-    //     if (supplier != null && !supplier.isEmpty()) {
-    //         String filters = "[[\"supplier\",\"=\",\"" + supplier + "\"]]";
-    //         url.append("&filters=").append(filters);
-    //     }
-    
-    //     String finalUrl = url.toString();
-    //     System.out.println("Final URL: " + finalUrl);
-    
-    //     List<Cookie> cookies = cookieStore.getCookies();
-    //     for (Cookie cookie : cookies) {
-    //         System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue());
-    //     }
-    
-    //     HttpHeaders headers = new HttpHeaders();
-    //     headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-    //     HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-    
-    //     ResponseEntity<Map> response = restTemplate.exchange(finalUrl, HttpMethod.GET, requestEntity, Map.class);
-    
-    //     System.out.println("Response: " + response.getBody());
-    
-    //     List<Map<String, Object>> quotations = new ArrayList<>();
-    //     if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-    //         Object data = response.getBody().get("data");
-    //         if (data instanceof List) {
-    //             quotations = (List<Map<String, Object>>) data;
-    //         } else {
-    //             System.err.println("Unexpected response structure.");
-    //         }
-    //     }
-    
-    //     return quotations;
-    // }
     public List<Map<String, Object>> getRequestsForQuotation(String supplier) throws Exception {
         if (!isSessionValid()) {
             throw new IllegalStateException("No valid session. Please log in.");
@@ -246,7 +202,6 @@ public class ErpNextClient {
             }
         }
 
-        // Group items by quotation name
         Map<String, Map<String, Object>> quotationMap = new HashMap<>();
         for (Map<String, Object> rawQuotation : rawQuotations) {
             String name = (String) rawQuotation.get("name");
@@ -275,7 +230,6 @@ public class ErpNextClient {
             item.put("base_amount", rawQuotation.get("base_amount"));
             item.put("warehouse", rawQuotation.get("warehouse"));
 
-            // Only add item if it has valid data (e.g., item_code is not null)
             if (item.get("item_code") != null) {
                 ((List<Map<String, Object>>) quotationMap.get(name).get("items")).add(item);
             }
@@ -284,7 +238,6 @@ public class ErpNextClient {
         return new ArrayList<>(quotationMap.values());
     }
 
-    
     public String updatePrice(String quotationName, String itemCode, double newPrice, String supplier) {
         try {
             if (!isSessionValid()) {
@@ -340,29 +293,28 @@ public class ErpNextClient {
             if (!isSessionValid()) {
                 throw new IllegalStateException("No valid session. Please log in.");
             }
-    
+
             StringBuilder url = new StringBuilder(baseUrl + "resource/Purchase Order?fields=[\"*\"]");
-    
+
             if (supplier != null && !supplier.isEmpty()) {
-                // Ne pas encoder, construire la chaîne manuellement
                 String rawFilter = "[[\"supplier\", \"=\", \"" + supplier + "\"]]";
                 System.out.println("Raw filter: " + rawFilter);
                 url.append("&filters=").append(rawFilter);
             }
-    
+
             String finalUrl = url.toString();
             System.out.println("Fetching purchase orders from: " + finalUrl);
-    
+
             List<Cookie> cookies = cookieStore.getCookies();
             System.out.println("Cookies sent with request:");
             for (Cookie cookie : cookies) {
                 System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain() + "; Path=" + cookie.getPath());
             }
-    
+
             ResponseEntity<Map> response = restTemplate.exchange(finalUrl, HttpMethod.GET, null, Map.class);
-    
+
             System.out.println("Raw response from /api/resource/Purchase Order: " + response.getBody());
-    
+
             List<Map<String, Object>> orders = new ArrayList<>();
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Object data = response.getBody().get("data");
@@ -383,34 +335,33 @@ public class ErpNextClient {
             throw e;
         }
     }
-    
 
     public List<Map<String, Object>> getPurchaseInvoices(String supplier) {
         try {
             if (!isSessionValid()) {
                 throw new IllegalStateException("No valid session. Please log in.");
             }
-    
+
             StringBuilder url = new StringBuilder(baseUrl + "resource/Purchase Invoice?fields=[\"*\"]");
             if (supplier != null && !supplier.isEmpty()) {
                 String filter = "[[\"supplier\",\"=\",\"" + supplier + "\"]]";
                 System.out.println("Raw filter: " + filter);
                 url.append("&filters=").append(filter);
             }
-    
+
             String finalUrl = url.toString();
             System.out.println("Fetching purchase invoices from: " + finalUrl);
-    
+
             List<Cookie> cookies = cookieStore.getCookies();
             System.out.println("Cookies sent with request:");
             for (Cookie cookie : cookies) {
                 System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain() + "; Path=" + cookie.getPath());
             }
-    
+
             ResponseEntity<Map> response = restTemplate.exchange(finalUrl, HttpMethod.GET, null, Map.class);
-    
+
             System.out.println("Raw response from /api/resource/Purchase Invoice: " + response.getBody());
-    
+
             List<Map<String, Object>> invoices = new ArrayList<>();
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Object data = response.getBody().get("data");
@@ -431,7 +382,6 @@ public class ErpNextClient {
             throw e;
         }
     }
-    
 
     public String updateInvoiceStatus(String invoiceName, String status, String supplier) {
         try {
@@ -474,6 +424,237 @@ public class ErpNextClient {
             System.err.println("Error updating invoice status: " + e.getMessage());
             e.printStackTrace();
             return "Error updating invoice status: " + e.getMessage();
+        }
+    }
+
+    // public String createPaymentEntry(String invoiceName, String supplier, double paymentAmount, String paymentDate, String referenceNo, String paymentAccount) {
+    //     try {
+    //         if (!isSessionValid()) {
+    //             return "No valid session. Please log in.";
+    //         }
+
+    //         String url = baseUrl + "resource/Payment Entry";
+    //         System.out.println("Creating payment entry for invoice: " + invoiceName + ", supplier: " + supplier + ", amount: " + paymentAmount);
+
+    //         List<Cookie> cookies = cookieStore.getCookies();
+    //         System.out.println("Cookies sent with request:");
+    //         for (Cookie cookie : cookies) {
+    //             System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain() + "; Path=" + cookie.getPath());
+    //         }
+
+    //         // Fetch invoice details to validate supplier and get currency
+    //         String invoiceUrl = baseUrl + "resource/Purchase Invoice/" + URLEncoder.encode(invoiceName, StandardCharsets.UTF_8);
+    //         ResponseEntity<Map> invoiceResponse = restTemplate.exchange(invoiceUrl, HttpMethod.GET, null, Map.class);
+    //         if (!invoiceResponse.getStatusCode().is2xxSuccessful() || invoiceResponse.getBody() == null) {
+    //             return "Failed to fetch invoice: " + invoiceName;
+    //         }
+
+    //         Map<String, Object> invoiceData = (Map<String, Object>) invoiceResponse.getBody().get("data");
+    //         String invoiceSupplier = (String) invoiceData.get("supplier");
+    //         if (supplier != null && !supplier.isEmpty() && !supplier.equals(invoiceSupplier)) {
+    //             return "Invoice " + invoiceName + " does not belong to supplier: " + supplier;
+    //         }
+
+    //         // Map paymentAccount to General Ledger account
+    //         String paidFromAccount;
+    //         switch (paymentAccount.toLowerCase()) {
+    //             case "bank":
+    //                 paidFromAccount = "Bank Account - AD"; // replace with your real bank account name
+    //                 break;
+    //             case "cash":
+    //                 paidFromAccount = "1100 - Cash In Hand - AD"; // replace with your real cash account name
+    //                 break;
+    //             default:
+    //                 return "Invalid payment account: " + paymentAccount;
+    //         }
+
+    //         // Create Payment Entry payload
+    //         Map<String, Object> paymentData = new HashMap<>();
+    //         paymentData.put("doctype", "Payment Entry");
+    //         paymentData.put("payment_type", "Pay");
+    //         paymentData.put("party_type", "Supplier");
+    //         paymentData.put("party", invoiceSupplier);
+    //         paymentData.put("paid_amount", paymentAmount);
+    //         paymentData.put("received_amount", paymentAmount);
+    //         paymentData.put("mode_of_payment", paymentAccount);
+    //         paymentData.put("posting_date", paymentDate);
+    //         paymentData.put("source_exchange_rate", 1.0); // Assume same currency
+    //         paymentData.put("paid_from", paidFromAccount);
+    //         paymentData.put("paid_from_account_currency", "USD"); // Assume company currency
+    //         if (referenceNo != null && !referenceNo.isEmpty()) {
+    //             paymentData.put("reference_no", referenceNo);
+    //         }
+
+    //         List<Map<String, Object>> references = new ArrayList<>();
+    //         Map<String, Object> reference = new HashMap<>();
+    //         reference.put("reference_doctype", "Purchase Invoice");
+    //         reference.put("reference_name", invoiceName);
+    //         reference.put("allocated_amount", paymentAmount);
+    //         references.add(reference);
+    //         paymentData.put("references", references);
+
+    //         HttpHeaders headers = new HttpHeaders();
+    //         headers.setContentType(MediaType.APPLICATION_JSON);
+    //         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(paymentData, headers);
+
+    //         ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+
+    //         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+    //             Map<String, Object> createdData = (Map<String, Object>) response.getBody().get("data");
+    //             String paymentName = (String) createdData.get("name");
+            
+    //             // Submit by setting docstatus to 1
+    //             String submitUrl = baseUrl + "resource/Payment Entry/" + paymentName;
+    //             HttpHeaders submitHeaders = new HttpHeaders();
+    //             submitHeaders.setContentType(MediaType.APPLICATION_JSON);
+            
+    //             Map<String, Object> submitData = new HashMap<>();
+    //             submitData.put("docstatus", 1);
+            
+    //             HttpEntity<Map<String, Object>> submitEntity = new HttpEntity<>(submitData, submitHeaders);
+    //             ResponseEntity<Map> submitResponse = restTemplate.exchange(submitUrl, HttpMethod.PUT, submitEntity, Map.class);
+            
+    //             if (submitResponse.getStatusCode().is2xxSuccessful()) {
+    //                 System.out.println("Successfully submitted payment entry: " + paymentName);
+    //                 return null;
+    //             } else {
+    //                 return "Failed to submit Payment Entry: HTTP " + submitResponse.getStatusCode();
+    //             }
+    //         }
+    //         else {
+    //             return "Failed to create payment entry: HTTP " + response.getStatusCode();
+    //         }
+    //     } catch (HttpClientErrorException e) {
+    //         System.err.println("HTTP Error creating payment entry: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+    //         return "HTTP Error creating payment entry: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
+    //     } catch (Exception e) {
+    //         System.err.println("Error creating payment entry: " + e.getMessage());
+    //         e.printStackTrace();
+    //         return "Error creating payment entry: " + e.getMessage();
+    //     }
+    // }
+    public String createPaymentEntry(String invoiceName, String supplier, double paymentAmount, String paymentDate, String referenceNo, String paymentAccount) {
+        try {
+            if (!isSessionValid()) {
+                return "No valid session. Please log in.";
+            }
+    
+            String url = baseUrl + "resource/Payment Entry";
+            System.out.println("Creating payment entry for invoice: " + invoiceName + ", supplier: " + supplier + ", amount: " + paymentAmount);
+    
+            // Fetch invoice details - keep URL encoding for invoice name as it might contain special chars
+            String invoiceUrl = baseUrl + "resource/Purchase Invoice/" + URLEncoder.encode(invoiceName, StandardCharsets.UTF_8);
+            ResponseEntity<Map> invoiceResponse = restTemplate.exchange(invoiceUrl, HttpMethod.GET, null, Map.class);
+            if (!invoiceResponse.getStatusCode().is2xxSuccessful() || invoiceResponse.getBody() == null) {
+                return "Failed to fetch invoice: " + invoiceName;
+            }
+    
+            Map<String, Object> invoiceData = (Map<String, Object>) invoiceResponse.getBody().get("data");
+            String invoiceSupplier = (String) invoiceData.get("supplier");
+            if (supplier != null && !supplier.isEmpty() && !supplier.equals(invoiceSupplier)) {
+                return "Invoice " + invoiceName + " does not belong to supplier: " + supplier;
+            }
+    
+            // Get invoice currency or default to MAD
+            String invoiceCurrency = invoiceData.get("currency") != null ? 
+                (String) invoiceData.get("currency") : "MAD";
+    
+            // Map paymentAccount to General Ledger account
+            String paidFromAccount;
+            switch (paymentAccount.toLowerCase()) {
+                case "bank":
+                    paidFromAccount = "Bank Account - AD"; // replace with your real bank account name
+                    break;
+                case "cash":
+                    paidFromAccount = "1101 - Main Cash - AD - AD"; // replace with your real cash account name
+                    break;
+                default:
+                    return "Invalid payment account: " + paymentAccount;
+            }
+    
+            // Fetch account details - NO URL encoding for account name
+            String accountUrl = baseUrl + "resource/Account/" + paidFromAccount;
+            ResponseEntity<Map> accountResponse = restTemplate.exchange(accountUrl, HttpMethod.GET, null, Map.class);
+            
+            if (!accountResponse.getStatusCode().is2xxSuccessful() || accountResponse.getBody() == null) {
+                return "Account not found: " + paidFromAccount + ". Please verify the exact account name exists in ERPNext.";
+            }
+    
+            Map<String, Object> accountData = (Map<String, Object>) accountResponse.getBody().get("data");
+            String accountCurrency = (String) accountData.get("account_currency");
+            if (accountCurrency == null) {
+                accountCurrency = "MAD"; // default if not specified
+            }
+    
+            // Verify currencies match
+            if (!invoiceCurrency.equals(accountCurrency)) {
+                return "Currency mismatch: Invoice is in " + invoiceCurrency + " but account is in " + accountCurrency;
+            }
+    
+            // Create Payment Entry payload
+            Map<String, Object> paymentData = new HashMap<>();
+            paymentData.put("doctype", "Payment Entry");
+            paymentData.put("payment_type", "Pay");
+            paymentData.put("party_type", "Supplier");
+            paymentData.put("party", invoiceSupplier);
+            paymentData.put("paid_amount", paymentAmount);
+            paymentData.put("received_amount", paymentAmount);
+            paymentData.put("mode_of_payment", paymentAccount);
+            paymentData.put("posting_date", paymentDate);
+            paymentData.put("source_exchange_rate", 1.0);
+            paymentData.put("paid_from", paidFromAccount);
+            paymentData.put("paid_from_account_currency", accountCurrency);
+            paymentData.put("currency", accountCurrency);
+            if (referenceNo != null && !referenceNo.isEmpty()) {
+                paymentData.put("reference_no", referenceNo);
+            }
+    
+            List<Map<String, Object>> references = new ArrayList<>();
+            Map<String, Object> reference = new HashMap<>();
+            reference.put("reference_doctype", "Purchase Invoice");
+            reference.put("reference_name", invoiceName);
+            reference.put("allocated_amount", paymentAmount);
+            references.add(reference);
+            paymentData.put("references", references);
+    
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(paymentData, headers);
+    
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+    
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> createdData = (Map<String, Object>) response.getBody().get("data");
+                String paymentName = (String) createdData.get("name");
+            
+                // Submit by setting docstatus to 1
+                String submitUrl = baseUrl + "resource/Payment Entry/" + paymentName;
+                HttpHeaders submitHeaders = new HttpHeaders();
+                submitHeaders.setContentType(MediaType.APPLICATION_JSON);
+            
+                Map<String, Object> submitData = new HashMap<>();
+                submitData.put("docstatus", 1);
+            
+                HttpEntity<Map<String, Object>> submitEntity = new HttpEntity<>(submitData, submitHeaders);
+                ResponseEntity<Map> submitResponse = restTemplate.exchange(submitUrl, HttpMethod.PUT, submitEntity, Map.class);
+            
+                if (submitResponse.getStatusCode().is2xxSuccessful()) {
+                    System.out.println("Successfully submitted payment entry: " + paymentName);
+                    return null;
+                } else {
+                    return "Failed to submit Payment Entry: HTTP " + submitResponse.getStatusCode();
+                }
+            }
+            else {
+                return "Failed to create payment entry: HTTP " + response.getStatusCode();
+            }
+        } catch (HttpClientErrorException e) {
+            System.err.println("HTTP Error creating payment entry: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            return "HTTP Error creating payment entry: " + e.getStatusCode() + " - " + e.getResponseBodyAsString();
+        } catch (Exception e) {
+            System.err.println("Error creating payment entry: " + e.getMessage());
+            e.printStackTrace();
+            return "Error creating payment entry: " + e.getMessage();
         }
     }
 }

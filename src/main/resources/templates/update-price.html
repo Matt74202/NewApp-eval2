@@ -1,30 +1,225 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mettre à jour le prix</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --erpnext-blue: #5e64ff;
+            --erpnext-dark-blue: #4c51d1;
+            --erpnext-light-bg: #f5f7fa;
+            --erpnext-border: #d1d8dd;
+            --erpnext-text: #36414c;
+            --erpnext-light-text: #8d99a6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            color: var(--erpnext-text);
+            background-color: var(--erpnext-light-bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem 1rem;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            color: var(--erpnext-blue);
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+            color: var(--erpnext-text);
+            font-size: 14px;
+        }
+        
+        .user-icon {
+            margin-right: 6px;
+            font-size: 16px;
+        }
+        
+        .username {
+            font-weight: 500;
+        }
+        
+        .logout-form {
+            margin: 0;
+        }
+        
+        .logout-btn {
+            color: var(--erpnext-blue);
+            border-color: var(--erpnext-blue);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 4px 12px;
+            transition: all 0.2s;
+        }
+        
+        .logout-btn:hover {
+            background-color: var(--erpnext-blue);
+            color: white;
+        }
+
+        .sidebar {
+            background-color: #fff;
+            border-right: 1px solid var(--erpnext-border);
+            height: calc(100vh - 56px);
+            position: fixed;
+            width: 250px;
+            padding-top: 20px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            padding: 8px 20px;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-menu li:hover, .sidebar-menu li.active {
+            background-color: rgba(94, 100, 255, 0.1);
+            border-left: 3px solid var(--erpnext-blue);
+        }
+
+        .sidebar-menu a {
+            color: var(--erpnext-text);
+            text-decoration: none;
+            display: block;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px 30px;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--erpnext-border);
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--erpnext-text);
+        }
+
+        .alert {
+            border-radius: 4px;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--erpnext-blue);
+            border-color: var(--erpnext-blue);
+            border-radius: 4px;
+            font-weight: 500;
+            padding: 6px 12px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--erpnext-dark-blue);
+            border-color: var(--erpnext-dark-blue);
+        }
+
+        .btn-secondary {
+            background-color: #f2f5fa;
+            border-color: var(--erpnext-border);
+            color: var(--erpnext-text);
+            border-radius: 4px;
+            font-weight: 500;
+            padding: 6px 12px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e6ebf5;
+            border-color: #c8d1db;
+            color: var(--erpnext-text);
+        }
+
+        .form-control, .form-select {
+            border-color: var(--erpnext-border);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--erpnext-blue);
+            box-shadow: 0 0 0 0.2rem rgba(94, 100, 255, 0.25);
+        }
+
+        .form-label {
+            color: var(--erpnext-text);
+            font-weight: 500;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1>Mettre à jour le prix pour RFQ <span th:text="${rfqName}"></span></h1>
+    <nav class="navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">ERP System</a>
+            <div class="user-controls">
+                <span class="user-info" sec:authorize="isAuthenticated()">
+                    <i class="user-icon">👤</i>
+                    <span class="username" sec:authentication="name">User</span>
+                </span>
+                <form th:action="@{/logout}" method="post" class="logout-form">
+                    <button type="submit" class="btn btn-outline-primary btn-sm logout-btn">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li class="active"><a href="/rfqs">Supplier Quotations</a></li>
+            <li><a href="/purchase-orders">Purchase Orders</a></li>
+            <li><a href="/purchase-invoices">Purchase Invoices</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="page-header">
+            <h1>Mettre à jour le prix pour RFQ <span th:text="${rfqName}"></span></h1>
+        </div>
+
         <div th:if="${errorMessage}" class="alert alert-danger">
             <span th:text="${errorMessage}"></span>
         </div>
+
         <form th:action="@{/update-price}" method="post" class="mt-3">
             <input type="hidden" name="rfqName" th:value="${rfqName}">
             <input type="hidden" name="itemCode" th:value="${itemCode}">
+            <input type="hidden" name="supplier" th:value="${supplier}">
             <div class="mb-3">
                 <label for="newPrice" class="form-label">Nouveau prix</label>
                 <input type="number" step="0.01" class="form-control" id="newPrice" name="newPrice" required>
             </div>
-            <div class="mb-3">
-                <label for="supplier" class="form-label">Fournisseur</label>
-                <select id="supplier" name="supplier" class="form-select" required>
-                    <option th:each="supplier : ${suppliers}" th:value="${supplier.name}" th:text="${supplier.name}"></option>
-                </select>
-            </div>
             <button type="submit" class="btn btn-primary">Mettre à jour</button>
-            <a href="/rfqs" class="btn btn-secondary">Annuler</a>
+            <a th:href="@{/rfq-items(rfqName=${rfqName},supplier=${supplier})}" class="btn btn-secondary">Annuler</a>
         </form>
     </div>
 </body>

@@ -43,5 +43,8 @@ public class ErpNextService {
     public String updateInvoiceStatus(String invoiceName, String status, String supplier) {
         return erpNextClient.updateInvoiceStatus(invoiceName, status, supplier);
     }
-    
+
+    public String createPaymentEntry(String invoiceName, String supplier, double paymentAmount, String paymentDate, String referenceNo, String paymentAccount) {
+        return erpNextClient.createPaymentEntry(invoiceName, supplier, paymentAmount, paymentDate, referenceNo, paymentAccount);
+    }
 }

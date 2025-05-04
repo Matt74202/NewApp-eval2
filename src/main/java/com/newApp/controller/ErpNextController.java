@@ -190,35 +190,65 @@ public class ErpNextController {
             return "update-invoice-status";
         }
     }
+
     @GetMapping("/rfq-items")
     public String rfqItems(@RequestParam("rfqName") String rfqName, 
                           @RequestParam("supplier") String supplier, 
                           Model model) {
-        // Add rfqName and supplier to the model if needed in the template
         model.addAttribute("rfqName", rfqName);
         model.addAttribute("supplier", supplier);
-        return "rfq-items"; // Maps to src/main/resources/templates/rfq-items.html
+        return "rfq-items";
     }
 
-    // @PostMapping("/update-invoice-status")
-    // public String updateInvoiceStatus(@RequestParam String invoiceName, @RequestParam String status,
-    //                                  @RequestParam String supplier, Model model) {
-    //     try {
-    //         String result = erpNextService.updateInvoiceStatus(invoiceName, status, supplier);
-    //         if (result == null) {
-    //             return "redirect:/purchase-invoices?supplier=" + URLEncoder.encode(supplier, StandardCharsets.UTF_8);
-    //         } else {
-    //             model.addAttribute("errorMessage", result);
-    //             model.addAttribute("invoiceName", invoiceName);
-    //             List<Supplier> suppliers = erpNextService.getSuppliers();
-    //             model.addAttribute("suppliers", suppliers != null ? suppliers :Venues.addAttribute("suppliers", new ArrayList<>());
-    //             return "update-invoice-status";
-    //         }
-    //     } catch (IllegalStateException e) {
-    //         return "redirect:/login";
-    //     } catch (Exception e) {
-    //         model.addAttribute("errorMessage", "Error updating invoice status: " + e.getMessage());
-    //         return "update-invoice-status";
-    //     }
-    // }
+    @GetMapping("/create-payment")
+    public String showPaymentForm(@RequestParam String invoiceName, @RequestParam(required = false) String supplier, Model model) {
+        try {
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            model.addAttribute("invoiceName", invoiceName);
+            model.addAttribute("supplier", supplier);
+            return "create-payment";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            model.addAttribute("invoiceName", invoiceName);
+            model.addAttribute("supplier", supplier);
+            return "create-payment";
+        }
+    }
+
+    @PostMapping("/create-payment")
+    public String processPayment(
+            @RequestParam String invoiceName,
+            @RequestParam(required = false) String supplier,
+            @RequestParam double paymentAmount,
+            @RequestParam String paymentDate,
+            @RequestParam(required = false) String referenceNo,
+            @RequestParam String paymentAccount,
+            Model model) {
+        try {
+            String result = erpNextService.createPaymentEntry(invoiceName, supplier, paymentAmount, paymentDate, referenceNo, paymentAccount);
+            if (result == null) {
+                return "redirect:/purchase-invoices?supplier=" + URLEncoder.encode(supplier != null ? supplier : "", StandardCharsets.UTF_8);
+            } else {
+                model.addAttribute("errorMessage", result);
+                model.addAttribute("invoiceName", invoiceName);
+                model.addAttribute("supplier", supplier);
+                List<Supplier> suppliers = erpNextService.getSuppliers();
+                model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+                return "create-payment";
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error creating payment: " + e.getMessage());
+            model.addAttribute("invoiceName", invoiceName);
+            model.addAttribute("supplier", supplier);
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            return "create-payment";
+        }
+    }
 }
