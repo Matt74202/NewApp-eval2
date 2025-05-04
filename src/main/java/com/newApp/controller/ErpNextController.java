@@ -1,220 +1,201 @@
 package com.newApp.controller;
 
-import com.newApp.model.ErpNextClient;
+import com.newApp.model.Supplier;
 import com.newApp.service.ErpNextService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.HttpSession;
-
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Controller
-@RequestMapping
 public class ErpNextController {
 
-    private final ErpNextService erpNextService;
-    private final ErpNextClient erpNextClient;
-
-    public ErpNextController(ErpNextService erpNextService, ErpNextClient erpNextClient) {
-        this.erpNextService = erpNextService;
-        this.erpNextClient = erpNextClient;
-        System.out.println("ErpNextController initialized successfully.");
-    }
-
-    @GetMapping("/")
-    public String redirectToLogin(HttpSession session) {
-        System.out.println("Received request for /, checking authentication...");
-        Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-        if (isAuthenticated == null || !isAuthenticated) {
-            System.out.println("User not authenticated, redirecting to /login");
-            return "redirect:/login";
-        }
-        System.out.println("User authenticated, redirecting to /dashboard");
-        return "redirect:/dashboard";
-    }
+    @Autowired
+    private ErpNextService erpNextService;
 
     @GetMapping("/login")
-    public String showLoginPage(Model model, @RequestParam(value = "error", required = false) String error, @RequestParam(value = "errorMessage", required = false) String errorMessage) {
-        System.out.println("Received request for /login");
-        if (error != null) {
-            System.out.println("Error parameter present: " + errorMessage);
-            model.addAttribute("error", errorMessage != null ? errorMessage : "Login failed. Please try again.");
-        }
+    public String showLoginPage() {
         return "login";
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String username, @RequestParam String password, HttpSession session) {
-        System.out.println("Received POST request for /login with username: " + username);
-        try {
-            String loginError = erpNextClient.validateUserCredentials(username, password);
-            if (loginError != null) {
-                System.out.println("Login failed: " + loginError);
-                return "redirect:/login?error=true&errorMessage=" + java.net.URLEncoder.encode(loginError, java.nio.charset.StandardCharsets.UTF_8);
-            }
-
-            System.out.println("Login successful, setting session attributes...");
-            session.setAttribute("isAuthenticated", true);
-            session.setAttribute("username", username);
-            System.out.println("Redirecting to /dashboard");
+    public String login(@RequestParam String username, @RequestParam String password, Model model) {
+        String result = erpNextService.validateUserCredentials(username, password);
+        if (result == null) {
             return "redirect:/dashboard";
-        } catch (Exception e) {
-            System.err.println("Unexpected error during login processing: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/login?error=true&errorMessage=" + java.net.URLEncoder.encode("Unexpected error during login: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+        } else {
+            model.addAttribute("errorMessage", result);
+            return "login";
         }
     }
 
-    @GetMapping("/logout")
-    public String logout(HttpSession session) {
-        System.out.println("Received request for /logout");
-        session.invalidate();
-        System.out.println("Session invalidated, redirecting to /login");
-        return "redirect:/login";
-    }
-
-    @GetMapping("/dashboard")
-    public String showDashboard(HttpSession session, Model model) {
-        System.out.println("Received request for /dashboard");
+    @GetMapping({"/", "/dashboard"})
+    public String showDashboard(Model model) {
         try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            String username = (String) session.getAttribute("username");
-            if (username == null) {
-                System.out.println("Username not found in session, redirecting to /login");
-                return "redirect:/login";
-            }
-            System.out.println("User authenticated, rendering dashboard for username: " + username);
-            model.addAttribute("username", username);
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
             return "dashboard";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
         } catch (Exception e) {
-            System.err.println("Unexpected error while rendering dashboard: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/login?error=true&errorMessage=" + java.net.URLEncoder.encode("Unexpected error while rendering dashboard: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            return "dashboard";
         }
     }
 
-    @GetMapping("/suppliers")
-    public String showSuppliers(HttpSession session, Model model) {
-        System.out.println("Received request for /suppliers");
+    @GetMapping("/rfqs")
+    public String showRFQs(Model model) {
         try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            List suppliers = erpNextService.fetchSuppliers();
-            model.addAttribute("suppliers", suppliers);
-            return "suppliers";
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            model.addAttribute("rfqs", new ArrayList<>());
+            return "rfqs";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
         } catch (Exception e) {
-            System.err.println("Error while fetching suppliers: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/dashboard?error=true&errorMessage=" + java.net.URLEncoder.encode("Error fetching suppliers: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            model.addAttribute("rfqs", new ArrayList<>());
+            return "rfqs";
         }
     }
 
-    @GetMapping("/requests-for-quotation")
-    public String showRequestsForQuotation(HttpSession session, Model model) {
-        System.out.println("Received request for /requests-for-quotation");
+    @GetMapping("/api/rfqs")
+    @ResponseBody
+    public ResponseEntity<?> getRFQs(@RequestParam String supplier) {
         try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            List<Map<String, Object>> rfqs = erpNextService.fetchRequestsForQuotation();
-            model.addAttribute("rfqs", rfqs);
-            return "requests_for_quotation";
+            List<Map<String, Object>> rfqs = erpNextService.getRequestsForQuotation(supplier);
+            return ResponseEntity.ok(rfqs);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(401).body("No valid session. Please log in.");
         } catch (Exception e) {
-            System.err.println("Error while fetching requests for quotation: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/dashboard?error=true&errorMessage=" + java.net.URLEncoder.encode("Error fetching requests for quotation: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
-        }
-    }
-
-    @PostMapping("/update-price")
-    public String updatePrice(@RequestParam String rfqName, @RequestParam String itemCode, @RequestParam double newPrice, HttpSession session) {
-        System.out.println("Received POST request for /update-price for RFQ: " + rfqName);
-        try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            String error = erpNextService.updatePrice(rfqName, itemCode, newPrice);
-            if (error != null) {
-                return "redirect:/requests-for-quotation?error=true&errorMessage=" + java.net.URLEncoder.encode(error, java.nio.charset.StandardCharsets.UTF_8);
-            }
-            return "redirect:/requests-for-quotation";
-        } catch (Exception e) {
-            System.err.println("Error while updating price: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/requests-for-quotation?error=true&errorMessage=" + java.net.URLEncoder.encode("Error updating price: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            return ResponseEntity.status(500).body("Error fetching Supplier Quotations: " + e.getMessage());
         }
     }
 
     @GetMapping("/purchase-orders")
-    public String showPurchaseOrders(HttpSession session, Model model) {
-        System.out.println("Received request for /purchase-orders");
+    public String showPurchaseOrders(@RequestParam(required = false) String supplier, Model model) {
         try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            List<Map<String, Object>> orders = erpNextService.fetchPurchaseOrders();
-            model.addAttribute("orders", orders);
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            List<Map<String, Object>> orders = erpNextService.getPurchaseOrders(supplier);
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            model.addAttribute("orders", orders != null ? orders : new ArrayList<>());
+            model.addAttribute("selectedSupplier", supplier);
             return "purchase-orders";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
         } catch (Exception e) {
-            System.err.println("Error while fetching purchase orders: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/dashboard?error=true&errorMessage=" + java.net.URLEncoder.encode("Error fetching purchase orders: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            model.addAttribute("errorMessage", "Error fetching purchase orders: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            model.addAttribute("orders", new ArrayList<>());
+            model.addAttribute("selectedSupplier", supplier);
+            return "purchase-orders";
         }
     }
 
     @GetMapping("/purchase-invoices")
-    public String showPurchaseInvoices(HttpSession session, Model model) {
-        System.out.println("Received request for /purchase-invoices");
+    public String showPurchaseInvoices(@RequestParam(required = false) String supplier, Model model) {
         try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            List<Map<String, Object>> invoices = erpNextService.fetchPurchaseInvoices();
-            model.addAttribute("invoices", invoices);
-            return "purchase_invoices";
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            List<Map<String, Object>> invoices = erpNextService.getPurchaseInvoices(supplier);
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            model.addAttribute("invoices", invoices != null ? invoices : new ArrayList<>());
+            model.addAttribute("selectedSupplier", supplier);
+            return "purchase-invoices";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
         } catch (Exception e) {
-            System.err.println("Error while fetching purchase invoices: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/dashboard?error=true&errorMessage=" + java.net.URLEncoder.encode("Error fetching purchase invoices: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            model.addAttribute("errorMessage", "Error fetching purchase invoices: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            model.addAttribute("invoices", new ArrayList<>());
+            model.addAttribute("selectedSupplier", supplier);
+            return "purchase-invoices";
         }
     }
 
-    @PostMapping("/pay-invoice")
-    public String payInvoice(@RequestParam String invoiceName, HttpSession session) {
-        System.out.println("Received POST request for /pay-invoice for invoice: " + invoiceName);
+    @GetMapping("/update-price")
+    public String showUpdatePriceForm(@RequestParam String rfqName, @RequestParam String itemCode, Model model) {
         try {
-            Boolean isAuthenticated = (Boolean) session.getAttribute("isAuthenticated");
-            if (isAuthenticated == null || !isAuthenticated) {
-                System.out.println("User not authenticated, redirecting to /login");
-                return "redirect:/login";
-            }
-            String error = erpNextService.updateInvoiceStatus(invoiceName, "Paid");
-            if (error != null) {
-                return "redirect:/purchase-invoices?error=true&errorMessage=" + java.net.URLEncoder.encode(error, java.nio.charset.StandardCharsets.UTF_8);
-            }
-            return "redirect:/purchase-invoices";
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            model.addAttribute("rfqName", rfqName);
+            model.addAttribute("itemCode", itemCode);
+            return "update-price";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
         } catch (Exception e) {
-            System.err.println("Error while paying invoice: " + e.getMessage());
-            e.printStackTrace();
-            return "redirect:/purchase-invoices?error=true&errorMessage=" + java.net.URLEncoder.encode("Error paying invoice: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            return "update-price";
+        }
+    }
+
+    @PostMapping("/update-price")
+    public String updatePrice(@RequestParam String rfqName, @RequestParam String itemCode,
+                             @RequestParam double newPrice, @RequestParam String supplier, Model model) {
+        try {
+            String result = erpNextService.updatePrice(rfqName, itemCode, newPrice, supplier);
+            if (result == null) {
+                return "redirect:/rfqs";
+            } else {
+                model.addAttribute("errorMessage", result);
+                model.addAttribute("rfqName", rfqName);
+                model.addAttribute("itemCode", itemCode);
+                List<Supplier> suppliers = erpNextService.getSuppliers();
+                model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+                return "update-price";
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error updating price: " + e.getMessage());
+            return "update-price";
+        }
+    }
+
+    @GetMapping("/update-invoice-status")
+    public String showUpdateInvoiceStatusForm(@RequestParam String invoiceName, Model model) {
+        try {
+            List<Supplier> suppliers = erpNextService.getSuppliers();
+            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            model.addAttribute("invoiceName", invoiceName);
+            return "update-invoice-status";
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
+            model.addAttribute("suppliers", new ArrayList<>());
+            return "update-invoice-status";
+        }
+    }
+
+    @PostMapping("/update-invoice-status")
+    public String updateInvoiceStatus(@RequestParam String invoiceName, @RequestParam String status,
+                                     @RequestParam String supplier, Model model) {
+        try {
+            String result = erpNextService.updateInvoiceStatus(invoiceName, status, supplier);
+            if (result == null) {
+                return "redirect:/purchase-invoices?supplier=" + URLEncoder.encode(supplier, StandardCharsets.UTF_8);
+            } else {
+                model.addAttribute("errorMessage", result);
+                model.addAttribute("invoiceName", invoiceName);
+                List<Supplier> suppliers = erpNextService.getSuppliers();
+                model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+                return "update-invoice-status";
+            }
+        } catch (IllegalStateException e) {
+            return "redirect:/login";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Error updating invoice status: " + e.getMessage());
+            return "update-invoice-status";
         }
     }
 }

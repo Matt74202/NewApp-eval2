@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Supplier Quotations</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Supplier Quotations</h1>
+
+        <!-- Afficher les messages d'erreur -->
+        <div id="errorMessage" class="alert alert-danger d-none"></div>
+
+        <!-- Sélection du fournisseur -->
+        <div class="mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="supplier" class="form-label">Select Supplier:</label>
+                    <select id="supplier" class="form-select">
+                        <option value="" selected>Choose a supplier</option>
+                        <option th:each="supplier : ${suppliers}"
+                                th:value="${supplier.name}"
+                                th:text="${supplier.name}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2 align-self-end">
+                    <button id="fetchQuotations" class="btn btn-primary">Fetch Quotations</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table des devis fournisseurs -->
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Supplier</th>
+                    <th>Status</th>
+                    <th>Transaction Date</th>
+                    <th>Grand Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="quotationsTable">
+                <tr>
+                    <td colspan="6" class="text-center">Select a supplier and click Fetch Quotations.</td>
+                </tr>
+            </tbody>
+        </table>
+        
+
+        <!-- Lien pour revenir au tableau de bord -->
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#fetchQuotations').click(function() {
+                var supplier = $('#supplier').val();
+                if (!supplier) {
+                    $('#errorMessage').text('Please select a supplier.').removeClass('d-none');
+                    return;
+                }
+
+                $('#errorMessage').addClass('d-none');
+                $.ajax({
+                    url: '/api/rfqs',
+                    type: 'GET',
+                    data: { supplier: supplier },
+                    success: function(data) {
+    var tbody = $('#quotationsTable');
+    tbody.empty();
+    if (data && data.length > 0) {
+        $.each(data, function(index, rfq) {
+            var row = $('<tr>');
+            row.append($('<td>').text(rfq.name || 'N/A'));                       // ID
+            row.append($('<td>').text(rfq.supplier || 'N/A'));                   // Supplier
+            row.append($('<td>').text(rfq.status || 'N/A'));                     // Status
+            row.append($('<td>').text(rfq.transaction_date || 'N/A'));          // Date
+            row.append($('<td>').text(rfq.grand_total || 'N/A'));               // Total
+
+            var actionTd = $('<td>');
+            if (rfq.items && rfq.items.length > 0) {
+                var link = $('<a>')
+                    .attr('href', '/update-price?rfqName=' + encodeURIComponent(rfq.name) + '&itemCode=' + encodeURIComponent(rfq.items[0].item_code))
+                    .addClass('btn btn-sm btn-primary')
+                    .text('Update Price');
+                actionTd.append(link);
+            } else {
+                actionTd.text('No items available');
+            }
+            row.append(actionTd);
+            tbody.append(row);
+        });
+    } else {
+        tbody.append($('<tr>').append($('<td>').attr('colspan', 6).addClass('text-center').text('No supplier quotations found.')));
+    }
+},
+
+                    error: function(xhr) {
+                        $('#errorMessage').text('Error fetching quotations: ' + (xhr.responseText || 'Unknown error')).removeClass('d-none');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

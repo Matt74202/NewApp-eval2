@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Factures d'achat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Factures d'achat</h1>
+        <div th:if="${errorMessage}" class="alert alert-danger">
+            <span th:text="${errorMessage}"></span>
+        </div>
+        <div class="mb-3">
+            <label for="supplier" class="form-label">Filtrer par fournisseur</label>
+            <select id="supplier" class="form-select" onchange="window.location.href='/purchase-invoices?supplier=' + this.value">
+                <option value="">Tous les fournisseurs</option>
+                <option th:each="supplier : ${suppliers}"
+                        th:value="${supplier.name}"
+                        th:text="${supplier.name}"
+                        th:selected="${supplier.name == selectedSupplier}">
+                </option>
+            </select>
+            
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Fournisseur</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="invoice : ${invoices}">
+                    <td th:text="${invoice.name}"></td>
+                    <td th:text="${invoice.supplier}"></td>
+                    <td th:text="${invoice.status}"></td>
+                    <td>
+                        <a th:href="@{/update-invoice-status(invoiceName=${invoice.name})}"
+                           class="btn btn-sm btn-primary">Mettre à jour le statut</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <a href="/dashboard" class="btn btn-secondary">Retour au tableau de bord</a>
+    </div>
+</body>
+</html>
