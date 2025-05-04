@@ -52,18 +52,23 @@ public class ErpNextController {
     }
 
     @GetMapping("/rfqs")
-    public String showRFQs(Model model) {
+    public String showRFQs(@RequestParam(required = false) String supplier, Model model) {
         try {
             List<Supplier> suppliers = erpNextService.getSuppliers();
+            List<Map<String, Object>> rfqs = supplier != null && !supplier.isEmpty() 
+                ? erpNextService.getRequestsForQuotation(supplier) 
+                : new ArrayList<>();
             model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
-            model.addAttribute("rfqs", new ArrayList<>());
+            model.addAttribute("rfqs", rfqs);
+            model.addAttribute("selectedSupplier", supplier);
             return "rfqs";
         } catch (IllegalStateException e) {
             return "redirect:/login";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
+            model.addAttribute("errorMessage", "Error fetching supplier quotations: " + e.getMessage());
             model.addAttribute("suppliers", new ArrayList<>());
             model.addAttribute("rfqs", new ArrayList<>());
+            model.addAttribute("selectedSupplier", supplier);
             return "rfqs";
         }
     }
@@ -122,18 +127,23 @@ public class ErpNextController {
     }
 
     @GetMapping("/update-price")
-    public String showUpdatePriceForm(@RequestParam String rfqName, @RequestParam String itemCode, Model model) {
+    public String showUpdatePriceForm(@RequestParam String rfqName, @RequestParam String itemCode, 
+                                     @RequestParam String supplier, Model model) {
         try {
             List<Supplier> suppliers = erpNextService.getSuppliers();
             model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
             model.addAttribute("rfqName", rfqName);
             model.addAttribute("itemCode", itemCode);
+            model.addAttribute("supplier", supplier);
             return "update-price";
         } catch (IllegalStateException e) {
             return "redirect:/login";
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
             model.addAttribute("suppliers", new ArrayList<>());
+            model.addAttribute("rfqName", rfqName);
+            model.addAttribute("itemCode", itemCode);
+            model.addAttribute("supplier", supplier);
             return "update-price";
         }
     }
@@ -144,11 +154,12 @@ public class ErpNextController {
         try {
             String result = erpNextService.updatePrice(rfqName, itemCode, newPrice, supplier);
             if (result == null) {
-                return "redirect:/rfqs";
+                return "redirect:/rfqs?supplier=" + URLEncoder.encode(supplier, StandardCharsets.UTF_8);
             } else {
                 model.addAttribute("errorMessage", result);
                 model.addAttribute("rfqName", rfqName);
                 model.addAttribute("itemCode", itemCode);
+                model.addAttribute("supplier", supplier);
                 List<Supplier> suppliers = erpNextService.getSuppliers();
                 model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
                 return "update-price";
@@ -157,6 +168,9 @@ public class ErpNextController {
             return "redirect:/login";
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Error updating price: " + e.getMessage());
+            model.addAttribute("rfqName", rfqName);
+            model.addAttribute("itemCode", itemCode);
+            model.addAttribute("supplier", supplier);
             return "update-price";
         }
     }
@@ -176,26 +190,35 @@ public class ErpNextController {
             return "update-invoice-status";
         }
     }
-
-    @PostMapping("/update-invoice-status")
-    public String updateInvoiceStatus(@RequestParam String invoiceName, @RequestParam String status,
-                                     @RequestParam String supplier, Model model) {
-        try {
-            String result = erpNextService.updateInvoiceStatus(invoiceName, status, supplier);
-            if (result == null) {
-                return "redirect:/purchase-invoices?supplier=" + URLEncoder.encode(supplier, StandardCharsets.UTF_8);
-            } else {
-                model.addAttribute("errorMessage", result);
-                model.addAttribute("invoiceName", invoiceName);
-                List<Supplier> suppliers = erpNextService.getSuppliers();
-                model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
-                return "update-invoice-status";
-            }
-        } catch (IllegalStateException e) {
-            return "redirect:/login";
-        } catch (Exception e) {
-            model.addAttribute("errorMessage", "Error updating invoice status: " + e.getMessage());
-            return "update-invoice-status";
-        }
+    @GetMapping("/rfq-items")
+    public String rfqItems(@RequestParam("rfqName") String rfqName, 
+                          @RequestParam("supplier") String supplier, 
+                          Model model) {
+        // Add rfqName and supplier to the model if needed in the template
+        model.addAttribute("rfqName", rfqName);
+        model.addAttribute("supplier", supplier);
+        return "rfq-items"; // Maps to src/main/resources/templates/rfq-items.html
     }
+
+    // @PostMapping("/update-invoice-status")
+    // public String updateInvoiceStatus(@RequestParam String invoiceName, @RequestParam String status,
+    //                                  @RequestParam String supplier, Model model) {
+    //     try {
+    //         String result = erpNextService.updateInvoiceStatus(invoiceName, status, supplier);
+    //         if (result == null) {
+    //             return "redirect:/purchase-invoices?supplier=" + URLEncoder.encode(supplier, StandardCharsets.UTF_8);
+    //         } else {
+    //             model.addAttribute("errorMessage", result);
+    //             model.addAttribute("invoiceName", invoiceName);
+    //             List<Supplier> suppliers = erpNextService.getSuppliers();
+    //             model.addAttribute("suppliers", suppliers != null ? suppliers :Venues.addAttribute("suppliers", new ArrayList<>());
+    //             return "update-invoice-status";
+    //         }
+    //     } catch (IllegalStateException e) {
+    //         return "redirect:/login";
+    //     } catch (Exception e) {
+    //         model.addAttribute("errorMessage", "Error updating invoice status: " + e.getMessage());
+    //         return "update-invoice-status";
+    //     }
+    // }
 }

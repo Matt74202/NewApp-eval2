@@ -24,6 +24,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -165,55 +166,124 @@ public class ErpNextClient {
         }
     }
 
+    // public List<Map<String, Object>> getRequestsForQuotation(String supplier) throws Exception {
+    //     if (!isSessionValid()) {
+    //         throw new IllegalStateException("No valid session. Please log in.");
+    //     }
+    
+    //     String fields = "[\"name\",\"title\",\"status\",\"supplier\",\"transaction_date\",\"grand_total\",\"items.name\",\"items.item_code\",\"items.item_name\",\"items.qty\",\"items.rate\",\"items.amount\",\"items.stock_uom\",\"items.uom\",\"items.conversion_factor\",\"items.base_rate\",\"items.base_amount\",\"items.warehouse\"]";
+    //     StringBuilder url = new StringBuilder(baseUrl + "resource/Supplier Quotation?fields=" + fields);
+    
+    //     if (supplier != null && !supplier.isEmpty()) {
+    //         String filters = "[[\"supplier\",\"=\",\"" + supplier + "\"]]";
+    //         url.append("&filters=").append(filters);
+    //     }
+    
+    //     String finalUrl = url.toString();
+    //     System.out.println("Final URL: " + finalUrl);
+    
+    //     List<Cookie> cookies = cookieStore.getCookies();
+    //     for (Cookie cookie : cookies) {
+    //         System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue());
+    //     }
+    
+    //     HttpHeaders headers = new HttpHeaders();
+    //     headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+    //     HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+    
+    //     ResponseEntity<Map> response = restTemplate.exchange(finalUrl, HttpMethod.GET, requestEntity, Map.class);
+    
+    //     System.out.println("Response: " + response.getBody());
+    
+    //     List<Map<String, Object>> quotations = new ArrayList<>();
+    //     if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+    //         Object data = response.getBody().get("data");
+    //         if (data instanceof List) {
+    //             quotations = (List<Map<String, Object>>) data;
+    //         } else {
+    //             System.err.println("Unexpected response structure.");
+    //         }
+    //     }
+    
+    //     return quotations;
+    // }
     public List<Map<String, Object>> getRequestsForQuotation(String supplier) throws Exception {
         if (!isSessionValid()) {
             throw new IllegalStateException("No valid session. Please log in.");
         }
-    
-        ObjectMapper mapper = new ObjectMapper();
-    
-        // Directly insert JSON strings without URL encoding
-        String fieldsJson = mapper.writeValueAsString(Collections.singletonList("*"));
-        StringBuilder url = new StringBuilder(baseUrl + "resource/Supplier Quotation?fields=" + fieldsJson);
-    
+
+        String fields = "[\"name\",\"title\",\"status\",\"supplier\",\"transaction_date\",\"grand_total\",\"items.item_code\",\"items.item_name\",\"items.qty\",\"items.rate\",\"items.amount\",\"items.stock_uom\",\"items.uom\",\"items.conversion_factor\",\"items.base_rate\",\"items.base_amount\",\"items.warehouse\"]";
+        StringBuilder url = new StringBuilder(baseUrl + "resource/Supplier Quotation?fields=" + fields);
+
         if (supplier != null && !supplier.isEmpty()) {
-            List<List<String>> filtersList = List.of(
-                List.of("supplier", "=", supplier)
-            );
-            String filtersJson = mapper.writeValueAsString(filtersList);
-            url.append("&filters=").append(filtersJson);
+            String filters = "[[\"supplier\",\"=\",\"" + supplier + "\"]]";
+            url.append("&filters=").append(filters);
         }
-    
+
         String finalUrl = url.toString();
         System.out.println("Final URL: " + finalUrl);
-    
-        // Log cookies
+
         List<Cookie> cookies = cookieStore.getCookies();
         for (Cookie cookie : cookies) {
             System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue());
         }
-    
-        // Send the GET request
+
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-    
+
         ResponseEntity<Map> response = restTemplate.exchange(finalUrl, HttpMethod.GET, requestEntity, Map.class);
-    
+
         System.out.println("Response: " + response.getBody());
-    
-        List<Map<String, Object>> quotations = new ArrayList<>();
+
+        List<Map<String, Object>> rawQuotations = new ArrayList<>();
         if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             Object data = response.getBody().get("data");
             if (data instanceof List) {
-                quotations = (List<Map<String, Object>>) data;
+                rawQuotations = (List<Map<String, Object>>) data;
             } else {
-                System.err.println("Unexpected response structure.");
+                System.err.println("Unexpected response structure: " + data);
             }
         }
-    
-        return quotations;
+
+        // Group items by quotation name
+        Map<String, Map<String, Object>> quotationMap = new HashMap<>();
+        for (Map<String, Object> rawQuotation : rawQuotations) {
+            String name = (String) rawQuotation.get("name");
+            if (!quotationMap.containsKey(name)) {
+                Map<String, Object> quotation = new HashMap<>();
+                quotation.put("name", name);
+                quotation.put("title", rawQuotation.get("title"));
+                quotation.put("status", rawQuotation.get("status"));
+                quotation.put("supplier", rawQuotation.get("supplier"));
+                quotation.put("transaction_date", rawQuotation.get("transaction_date"));
+                quotation.put("grand_total", rawQuotation.get("grand_total"));
+                quotation.put("items", new ArrayList<Map<String, Object>>());
+                quotationMap.put(name, quotation);
+            }
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("item_code", rawQuotation.get("item_code"));
+            item.put("item_name", rawQuotation.get("item_name"));
+            item.put("qty", rawQuotation.get("qty"));
+            item.put("rate", rawQuotation.get("rate"));
+            item.put("amount", rawQuotation.get("amount"));
+            item.put("stock_uom", rawQuotation.get("stock_uom"));
+            item.put("uom", rawQuotation.get("uom"));
+            item.put("conversion_factor", rawQuotation.get("conversion_factor"));
+            item.put("base_rate", rawQuotation.get("base_rate"));
+            item.put("base_amount", rawQuotation.get("base_amount"));
+            item.put("warehouse", rawQuotation.get("warehouse"));
+
+            // Only add item if it has valid data (e.g., item_code is not null)
+            if (item.get("item_code") != null) {
+                ((List<Map<String, Object>>) quotationMap.get(name).get("items")).add(item);
+            }
+        }
+
+        return new ArrayList<>(quotationMap.values());
     }
+
     
     public String updatePrice(String quotationName, String itemCode, double newPrice, String supplier) {
         try {
@@ -362,37 +432,38 @@ public class ErpNextClient {
         }
     }
     
+
     public String updateInvoiceStatus(String invoiceName, String status, String supplier) {
         try {
             if (!isSessionValid()) {
                 return "No valid session. Please log in.";
             }
-    
-            String url = baseUrl + "resource/Purchase Invoice/" + invoiceName;
+
+            String url = baseUrl + "resource/Purchase Invoice/" + URLEncoder.encode(invoiceName, StandardCharsets.UTF_8);
             System.out.println("Updating status for invoice: " + invoiceName + " to " + status + ", supplier: " + supplier);
-    
+
             List<Cookie> cookies = cookieStore.getCookies();
             System.out.println("Cookies sent with request:");
             for (Cookie cookie : cookies) {
                 System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain() + "; Path=" + cookie.getPath());
             }
-    
+
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, null, Map.class);
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 return "Failed to fetch invoice: " + invoiceName;
             }
-    
+
             Map<String, Object> invoiceData = (Map<String, Object>) response.getBody().get("data");
             String invoiceSupplier = (String) invoiceData.get("supplier");
             if (supplier != null && !supplier.isEmpty() && !supplier.equals(invoiceSupplier)) {
                 return "Invoice " + invoiceName + " does not belong to supplier: " + supplier;
             }
-    
+
             invoiceData.put("status", status);
-    
+
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(invoiceData, new HttpHeaders());
             ResponseEntity<String> updateResponse = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
-    
+
             if (updateResponse.getStatusCode().is2xxSuccessful()) {
                 System.out.println("Successfully updated status for invoice " + invoiceName + " to " + status);
                 return null;
@@ -405,5 +476,4 @@ public class ErpNextClient {
             return "Error updating invoice status: " + e.getMessage();
         }
     }
-    
 }

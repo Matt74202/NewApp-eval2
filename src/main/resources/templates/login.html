@@ -2,26 +2,169 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - NewApp</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --erpnext-blue: #5e64ff;
+            --erpnext-dark-blue: #4c51d1;
+            --erpnext-light-bg: #f5f7fa;
+            --erpnext-border: #d1d8dd;
+            --erpnext-text: #36414c;
+            --erpnext-light-text: #8d99a6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            color: var(--erpnext-text);
+            background-color: var(--erpnext-light-bg);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        .login-container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 420px;
+            padding: 2rem;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .app-logo {
+            height: 36px;
+            margin-bottom: 1rem;
+        }
+
+        .app-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--erpnext-text);
+            margin-bottom: 0.75rem;
+        }
+
+        .login-subtitle {
+            font-size: 0.9rem;
+            color: var(--erpnext-light-text);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--erpnext-text);
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            height: calc(1.5em + 0.75rem + 2px);
+            padding: 0.5rem 0.75rem;
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+            color: var(--erpnext-text);
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid var(--erpnext-border);
+            border-radius: 6px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: var(--erpnext-blue);
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(94, 100, 255, 0.25);
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: var(--erpnext-blue);
+            border-color: var(--erpnext-blue);
+            width: 100%;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--erpnext-dark-blue);
+            border-color: var(--erpnext-dark-blue);
+        }
+
+        .alert {
+            border-radius: 6px;
+            border: none;
+            margin-bottom: 1.5rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--erpnext-light-text);
+        }
+
+        .footer a {
+            color: var(--erpnext-blue);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <div class="container my-4">
-        <h1>Login to NewApp</h1>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="app-name">NewApp</div>
+            <div class="login-subtitle">Login to access your account</div>
+        </div>
+        
         <div th:if="${error}" class="alert alert-danger">
             <span th:text="${error}"></span>
         </div>
+        
         <form th:action="@{/login}" method="post">
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" class="form-control" id="username" name="username" required>
+                <input type="text" class="form-control" id="username" name="username" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required>
+                <input type="password" class="form-control" id="password" name="password" required autocomplete="current-password">
             </div>
             <button type="submit" class="btn btn-primary">Login</button>
         </form>
+        
+        <div class="footer">
+            <p>Don't have an account? <a href="#">Contact administrator</a></p>
+        </div>
     </div>
 </body>
 </html>
