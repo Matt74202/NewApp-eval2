@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --erpnext-blue: #5e64ff;
@@ -174,6 +175,26 @@
         .welcome-message .highlight {
             color: var(--erpnext-blue);
         }
+
+        .chart-container {
+            background-color: #fff;
+            border: 1px solid var(--erpnext-border);
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 20px;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--erpnext-text);
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -225,11 +246,67 @@
             </div>
         </a>
     </div>
+
+    <div class="chart-container">
+        <div class="chart-title">Documents Distribution</div>
+        <canvas id="documentsChart"></canvas>
+    </div>
+
     <div class="welcome-message">
         Bienvenue dans <span class="highlight">ERPNext</span>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('documentsChart').getContext('2d');
+        
+        // Get the counts from Thymeleaf variables
+        const rfqsCount = parseInt(document.querySelector('.dashboard-card:nth-child(1) .card-count').textContent);
+        const poCount = parseInt(document.querySelector('.dashboard-card:nth-child(2) .card-count').textContent);
+        const piCount = parseInt(document.querySelector('.dashboard-card:nth-child(3) .card-count').textContent);
+        
+        const documentsChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Supplier Quotations', 'Purchase Orders', 'Purchase Invoices'],
+                datasets: [{
+                    data: [rfqsCount, poCount, piCount],
+                    backgroundColor: [
+                'rgba(0, 82, 147, 0.7)',      // Bleu foncé
+                'rgba(210, 180, 140, 0.7)',    // Beige
+                'rgba(144, 238, 144, 0.7)'     // Vert clair
+            ],
+            borderColor: [
+                'rgba(0, 82, 147, 1)',        // Bleu foncé
+                'rgba(210, 180, 140, 1)',      // Beige
+                'rgba(144, 238, 144, 1)'       // Vert clair
+            ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 </body>
 </html>
