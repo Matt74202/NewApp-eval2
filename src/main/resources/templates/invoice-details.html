@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détails de la Facture</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --erpnext-blue: #5e64ff;
+            --erpnext-dark-blue: #4c51d1;
+            --erpnext-light-bg: #f5f7fa;
+            --erpnext-border: #d1d8dd;
+            --erpnext-text: #36414c;
+            --erpnext-light-text: #8d99a6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+            color: var(--erpnext-text);
+            background-color: var(--erpnext-light-bg);
+            margin: 0;
+            padding: 0;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px 30px;
+        }
+
+        .page-header {
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--erpnext-border);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--erpnext-text);
+        }
+
+        .btn-primary {
+            background-color: var(--erpnext-blue);
+            border-color: var(--erpnext-blue);
+            border-radius: 4px;
+            font-weight: 500;
+            padding: 6px 12px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--erpnext-dark-blue);
+            border-color: var(--erpnext-dark-blue);
+        }
+
+        .invoice-section {
+            background-color: #fff;
+            border: 1px solid var(--erpnext-border);
+            border-radius: 6px;
+            padding: 20px;
+            overflow: visible;
+            width: 100%;
+        }
+
+        .table {
+            background-color: #fff;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            page-break-inside: auto;
+        }
+
+        .table thead th {
+            background-color: #f8fafc;
+            border-bottom: 1px solid var(--erpnext-border);
+            color: var(--erpnext-light-text);
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px 15px;
+        }
+
+        .table tbody td {
+            border-bottom: 1px solid var(--erpnext-border);
+            padding: 12px 15px;
+            color: var(--erpnext-text);
+            font-size: 14px;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+                background-color: white;
+            }
+            .invoice-section {
+                border: none;
+                box-shadow: none;
+                background-color: white !important;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+            }
+            .page-header, .sidebar, .navbar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">ERP System</a>
+        <div class="user-controls">
+            <span class="user-info" sec:authorize="isAuthenticated()">
+                <i class="user-icon">👤</i>
+                <span class="username" sec:authentication="name">User</span>
+            </span>
+            <form th:action="@{/logout}" method="post" class="logout-form">
+                <button type="submit" class="btn btn-outline-primary btn-sm logout-btn">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="sidebar">
+    <ul class="sidebar-menu">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/rfqs">Supplier Quotations</a></li>
+        <li><a href="/purchase-orders">Purchase Orders</a></li>
+        <li class="active"><a href="/purchase-invoices">Purchase Invoices</a></li>
+    </ul>
+</div>
+
+<div class="main-content">
+    <div class="page-header">
+        <h1>Détails de la Facture</h1>
+    </div>
+
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span th:text="${errorMessage}"></span>
+    </div>
+
+    <div class="invoice-section" th:unless="${errorMessage}" id="invoice-to-export">
+        <div class="d-flex justify-content-between mb-4">
+            <div>
+                <h2 class="h4">Facture</h2>
+                <p>Numéro : <span th:text="${invoice['name']} ?: 'N/A'" id="invoice-name"></span></p>
+                <p>Date : <span th:text="${invoice['posting_date']} ?: 'N/A'"></span></p>
+                <p>Statut : <span th:text="${invoice['status']} ?: 'N/A'"></span></p>
+            </div>
+            
+        </div>
+
+        <div class="mb-4">
+            <h3 class="h5">Fournisseur</h3>
+            <p th:text="${invoice['supplier']} ?: 'N/A'"></p>
+            <p th:text="${invoice['supplier_address']} ?: 'N/A'"></p>
+        </div>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-end">Quantité</th>
+                <th class="text-end">Prix Unitaire</th>
+                <th class="text-end">Total</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${invoice['items'] ?: {}}">
+                <td th:text="${item['item_name']} ?: 'N/A'"></td>
+                <td class="text-end" th:text="${item['qty']} ?: 0"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(item['rate'] ?: 0, 1, 2, 'POINT')} + ' €'"></td>
+                <td class="text-end" th:text="${#numbers.formatDecimal((item['qty'] ?: 0) * (item['rate'] ?: 0), 1, 2, 'POINT')} + ' €'"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(invoice['items'])}">
+                <td colspan="4" class="text-center">Aucun article trouvé</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr class="fw-bold">
+                <td colspan="3" class="text-end">Total :</td>
+                <td class="text-end" th:text="${#numbers.formatDecimal(invoice['grand_total'] ?: 0, 1, 2, 'POINT')} + ' €'"></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div class="text-end mt-4">
+        <button id="downloadPdf" class="btn btn-primary">Exporter en PDF</button>
+        <a th:href="@{/purchase-invoices}" class="btn btn-secondary ms-2">Retour aux factures</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const downloadButton = document.getElementById('downloadPdf');
+        if (!downloadButton) {
+            console.error('Download button not found');
+            return;
+        }
+
+        downloadButton.addEventListener('click', () => {
+            try {
+                if (typeof html2pdf === 'undefined') {
+                    console.error('html2pdf.js is not loaded');
+                    alert('Erreur : La bibliothèque de génération PDF n\'est pas chargée.');
+                    return;
+                }
+
+                const element = document.getElementById('invoice-to-export');
+                if (!element) {
+                    console.error('Invoice section not found');
+                    alert('Erreur : Section de facture introuvable.');
+                    return;
+                }
+
+                const invoiceNameElement = document.getElementById('invoice-name');
+                const invoiceName = invoiceNameElement ? invoiceNameElement.textContent.trim().replace(/[^a-zA-Z0-9-]/g, '-') : 'invoice';
+
+                const opt = {
+                    margin: [0.5, 0.5, 0.5, 0.5],  // Marges augmentées
+                    filename: `facture_${invoiceName}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
+                        scale: 1,  // Échelle normale
+                        logging: true,
+                        useCORS: true,
+                        letterRendering: true,
+                        scrollX: 0,
+                        scrollY: 0
+                    },
+                    jsPDF: { 
+                        unit: 'mm',  // Utilisation de millimètres pour plus de précision
+                        format: 'a4', 
+                        orientation: 'portrait' 
+                    },
+                    pagebreak: { 
+                        mode: ['avoid-all', 'css', 'legacy'],
+                        before: '.page-break' 
+                    }
+                };
+
+                // Clone the element to avoid modifying the original
+                const clonedElement = element.cloneNode(true);
+                clonedElement.style.width = '210mm'; // Largeur A4
+                clonedElement.style.padding = '20px';
+                document.body.appendChild(clonedElement);
+
+                html2pdf().set(opt).from(clonedElement).save().then(() => {
+                    document.body.removeChild(clonedElement);
+                }).catch(err => {
+                    console.error('PDF generation failed:', err);
+                    document.body.removeChild(clonedElement);
+                    alert('Erreur lors de la génération du PDF : ' + err.message);
+                });
+            } catch (err) {
+                console.error('Error in PDF generation script:', err);
+                alert('Erreur lors de la génération du PDF : ' + err.message);
+            }
+        });
+    });
+</script>
+</body>
+</html>

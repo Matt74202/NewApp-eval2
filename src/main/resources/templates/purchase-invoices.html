@@ -221,6 +221,7 @@
 
         .table tbody tr:hover {
             background-color: rgba(245, 247, 250, 0.5);
+            cursor: pointer;
         }
 
         .back-link {
@@ -290,22 +291,21 @@
                     <th>Statut</th>
                     <th>Price</th>
                     <th>Actions</th>
-                    
                 </tr>
             </thead>
             <tbody>
-                <tr th:each="invoice : ${invoices}">
+                <tr th:each="invoice : ${invoices}" th:attr="data-id=${invoice.name}">
                     <td th:text="${invoice.name}"></td>
                     <td th:text="${invoice.supplier}"></td>
                     <td th:text="${invoice.status}"></td>
                     <td th:text="${invoice.grand_total}"></td>
                     <td>
-                        <a th:href="@{/update-invoice-status(invoiceName=${invoice.name})}" class="btn btn-sm btn-primary">Mettre à jour le statut</a>
+                        <!-- <a th:href="@{/update-invoice-status(invoiceName=${invoice.name})}" class="btn btn-sm btn-primary">Mettre à jour le statut</a> -->
                         <a th:if="${invoice.status != 'Paid'}" th:href="@{/create-payment(invoiceName=${invoice.name}, supplier=${invoice.supplier})}" class="btn btn-sm btn-success">Payer</a>
                     </td>
                 </tr>
                 <tr th:if="${invoices.empty}">
-                    <td colspan="4" class="text-center">Aucune facture d'achat trouvée</td>
+                    <td colspan="5" class="text-center">Aucune facture d'achat trouvée</td>
                 </tr>
             </tbody>
         </table>
@@ -316,5 +316,18 @@
         
         <a href="/dashboard" class="btn btn-secondary back-link">Retour au tableau de bord</a>
     </div>
+
+    <script>
+        // Ajouter un événement de clic sur chaque ligne du tableau pour rediriger vers les détails de la facture
+        document.querySelectorAll('tbody tr[data-id]').forEach(row => {
+            row.addEventListener('click', (event) => {
+                // Vérifier que le clic n'est pas sur un bouton d'action
+                if (!event.target.closest('a.btn')) {
+                    const invoiceId = row.getAttribute('data-id');
+                    window.location.href = `/invoice-details/${encodeURIComponent(invoiceId)}`;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

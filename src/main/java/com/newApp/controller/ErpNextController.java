@@ -1,6 +1,7 @@
 package com.newApp.controller;
 
 import com.newApp.model.ErpNextClient;
+import com.newApp.model.PurchaseInvoice;
 import com.newApp.service.paymententry.PaymentEntryService;
 import com.newApp.service.purchaseinvoice.PurchaseInvoiceService;
 import com.newApp.service.purchaseorder.PurchaseOrderService;
@@ -60,19 +61,29 @@ public class ErpNextController {
     @GetMapping({"/", "/dashboard"})
     public String showDashboard(Model model) {
         try {
-            List<SupplierService.Supplier> suppliers = supplierService.getSuppliers();
-            model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
+            // Load RFQs (all, without supplier filter)
+            List<Map<String, Object>> rfqs = supplierQuotationService.getRequestsForQuotation(null);
+            model.addAttribute("rfqs", rfqs != null ? rfqs : new ArrayList<>());
+
+            // Load purchase orders (all, without supplier filter)
+            List<Map<String, Object>> purchaseOrders = purchaseOrderService.getPurchaseOrders(null);
+            model.addAttribute("purchaseOrders", purchaseOrders != null ? purchaseOrders : new ArrayList<>());
+
+            // Load purchase invoices (all, without supplier filter)
+            List<Map<String, Object>> purchaseInvoices = purchaseInvoiceService.getPurchaseInvoices(null);
+            model.addAttribute("purchaseInvoices", purchaseInvoices != null ? purchaseInvoices : new ArrayList<>());
+
             return "dashboard";
         } catch (IllegalStateException e) {
             return "redirect:/login";
         } catch (Exception e) {
-            model.addAttribute("errorMessage", "Error fetching suppliers: " + e.getMessage());
-            model.addAttribute("suppliers", new ArrayList<>());
+            model.addAttribute("errorMessage", "Error fetching dashboard data: " + e.getMessage());
+            model.addAttribute("rfqs", new ArrayList<>());
+            model.addAttribute("purchaseOrders", new ArrayList<>());
+            model.addAttribute("purchaseInvoices", new ArrayList<>());
             return "dashboard";
         }
-    }
-
-    @GetMapping("/rfqs")
+    }    @GetMapping("/rfqs")
     public String showRFQs(@RequestParam(required = false) String supplier, Model model) {
         try {
             List<SupplierService.Supplier> suppliers = supplierService.getSuppliers();
@@ -295,6 +306,24 @@ public class ErpNextController {
             List<SupplierService.Supplier> suppliers = supplierService.getSuppliers();
             model.addAttribute("suppliers", suppliers != null ? suppliers : new ArrayList<>());
             return "create-payment";
+        }
+    }
+
+    @GetMapping("/invoice-details/{invoiceName}")
+    public String showInvoiceDetails(@PathVariable String invoiceName, Model model) {
+        try {
+            Map<String, Object> invoiceDetails = purchaseInvoiceService.getPurchaseInvoiceDetails(invoiceName);
+
+            if (invoiceDetails == null || invoiceDetails.isEmpty()) {
+                model.addAttribute("errorMessage", "Aucune donnée trouvée pour la facture : " + invoiceName);
+                return "invoice-details";
+            }
+
+            model.addAttribute("invoice", invoiceDetails);
+            return "invoice-details";
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", "Erreur lors du chargement de la facture : " + e.getMessage());
+            return "invoice-details";
         }
     }
 }

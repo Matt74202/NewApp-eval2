@@ -137,23 +137,43 @@
             transform: translateY(-2px);
         }
 
-        .welcome-message {
-        background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
-        padding: 25px 40px;
-        border-radius: 12px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-        font-size: 1.6rem;
-        font-weight: 600;
-        color: var(--erpnext-text);
-        text-align: center;
-        max-width: 700px;
-        margin: 0 auto;
-    }
+        .card-count {
+            display: block;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--erpnext-dark-blue);
+            margin-bottom: 10px;
+        }
 
-    .welcome-message .highlight {
-        color: var(--erpnext-blue);
-    }
-        
+        .card-title {
+            display: block;
+            font-size: 1.1rem;
+            color: var(--erpnext-text);
+        }
+
+        .page-count {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--erpnext-light-text);
+            margin-top: 5px;
+        }
+
+        .welcome-message {
+            background: linear-gradient(135deg, #f0f4ff, #e8f0fe);
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--erpnext-text);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .welcome-message .highlight {
+            color: var(--erpnext-blue);
+        }
     </style>
 </head>
 <body>
@@ -181,16 +201,32 @@
     </ul>
 </div>
 
-
-    <div class="main-content">
-        <div class="dashboard-section">
-            <a href="/rfqs" class="dashboard-card">Supplier Quotations</a>
-            <a href="/purchase-orders" class="dashboard-card">Purchase Orders</a>
-            <a href="/purchase-invoices" class="dashboard-card">Purchase Invoices</a>
-        </div>
-        <div class="welcome-message">
-            Bienvenue dans <span class="highlight">ERPNext</span>
-        </div>
+<div class="main-content">
+    <div class="dashboard-section">
+        <a href="/rfqs" class="dashboard-card">
+            <span class="card-count" th:text="${rfqs.size()}">0</span>
+            <span class="card-title">Supplier Quotations</span>
+            <div class="page-count" th:if="${!rfqs.empty}">
+                <span th:text="${rfqs.size() + ' demandes de devis trouvées'}"></span>
+            </div>
+        </a>
+        <a href="/purchase-orders" class="dashboard-card">
+            <span class="card-count" th:text="${purchaseOrders.size()}">0</span>
+            <span class="card-title">Purchase Orders</span>
+            <div class="page-count" th:if="${!purchaseOrders.empty}">
+                <span th:text="${purchaseOrders.size() + ' bons de commande trouvés'}"></span>
+            </div>
+        </a>
+        <a href="/purchase-invoices" class="dashboard-card">
+            <span class="card-count" th:text="${purchaseInvoices.size()}">0</span>
+            <span class="card-title">Purchase Invoices</span>
+            <div class="page-count" th:if="${!purchaseInvoices.empty}">
+                <span th:text="${purchaseInvoices.size() + ' factures trouvées'}"></span>
+            </div>
+        </a>
+    </div>
+    <div class="welcome-message">
+        Bienvenue dans <span class="highlight">ERPNext</span>
     </div>
 </div>
 

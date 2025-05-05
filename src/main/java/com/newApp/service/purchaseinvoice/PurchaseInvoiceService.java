@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -126,4 +127,48 @@ public class PurchaseInvoiceService {
             return "Error updating invoice status: " + e.getMessage();
         }
     }
+    public Map<String, Object> getPurchaseInvoiceDetails(String invoiceName) {
+    try {
+        if (!isSessionValid()) {
+            throw new IllegalStateException("No valid session. Please log in.");
+        }
+
+        if (invoiceName == null || invoiceName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Invoice name must not be null or empty.");
+        }
+
+        String url = baseUrl + "resource/Purchase Invoice/" + invoiceName;
+        System.out.println("Fetching purchase invoice details from: " + url);
+
+        List<Cookie> cookies = cookieStore.getCookies();
+        System.out.println("Cookies sent with request:");
+        for (Cookie cookie : cookies) {
+            System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain() + "; Path=" + cookie.getPath());
+        }
+
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, null, Map.class);
+
+        System.out.println("Raw response from /api/resource/Purchase Invoice/" + invoiceName + ": " + response.getBody());
+
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            Object data = response.getBody().get("data");
+            if (data instanceof Map) {
+                return (Map<String, Object>) data;
+            } else {
+                System.err.println("Response 'data' is not a map: " + data);
+                return Collections.emptyMap();
+            }
+        } else {
+            return Collections.emptyMap();
+        }
+    } catch (HttpClientErrorException e) {
+        System.err.println("HTTP Error fetching purchase invoice details: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+        throw e;
+    } catch (Exception e) {
+        System.err.println("Error fetching purchase invoice details: " + e.getMessage());
+        e.printStackTrace();
+        throw e;
+    }
+}
+    
 }
