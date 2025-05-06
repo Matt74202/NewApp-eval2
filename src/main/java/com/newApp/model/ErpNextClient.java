@@ -118,7 +118,7 @@ public class ErpNextClient {
     }
 
     public String updatePrice(String quotationName, String itemCode, double newPrice, String supplier) {
-        return supplierQuotationService.updatePrice(quotationName, itemCode, newPrice, supplier);
+        return supplierQuotationService.updatePriceAndSubmit(quotationName, itemCode, newPrice, supplier);
     }
 
     public List<Map<String, Object>> getPurchaseOrders(String supplier) {

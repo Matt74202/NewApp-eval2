@@ -8,6 +8,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -113,53 +115,85 @@ public class SupplierQuotationService {
         return new ArrayList<>(quotationMap.values());
     }
 
-    public String updatePrice(String quotationName, String itemCode, double newPrice, String supplier) {
+    public String updatePriceAndSubmit(String quotationName, String itemCode, double newPrice, String supplier) {
         try {
             if (!isSessionValid()) {
                 return "No valid session. Please log in.";
             }
-
+    
+            // Étape 1: Récupérer le Supplier Quotation
             String url = baseUrl + "resource/Supplier Quotation/" + URLEncoder.encode(quotationName, StandardCharsets.UTF_8);
             System.out.println("Updating price for Supplier Quotation: " + quotationName + ", item: " + itemCode + ", supplier: " + supplier);
-
-            List<Cookie> cookies = cookieStore.getCookies();
-            System.out.println("Cookies sent with request:");
-            for (Cookie cookie : cookies) {
-                System.out.println("Cookie: " + cookie.getName() + "=" + cookie.getValue() + "; Domain=" + cookie.getDomain() + "; Path=" + cookie.getPath());
-            }
-
+    
+            // Récupération des données du Supplier Quotation
             ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, null, Map.class);
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
                 return "Failed to fetch Supplier Quotation: " + quotationName;
             }
-
+    
             Map<String, Object> quotationData = (Map<String, Object>) response.getBody().get("data");
             String quotationSupplier = (String) quotationData.get("supplier");
             if (supplier != null && !supplier.isEmpty() && !supplier.equals(quotationSupplier)) {
                 return "Supplier Quotation " + quotationName + " does not belong to supplier: " + supplier;
             }
-
+    
+            // Mise à jour du prix de l'article
             List<Map<String, Object>> items = (List<Map<String, Object>>) quotationData.get("items");
+            boolean itemFound = false;
             for (Map<String, Object> item : items) {
                 if (item.get("item_code").equals(itemCode)) {
                     item.put("rate", newPrice);
+                    itemFound = true;
                     break;
                 }
             }
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(quotationData, new HttpHeaders());
+    
+            if (!itemFound) {
+                return "Item " + itemCode + " not found in Supplier Quotation.";
+            }
+    
+            // Sauvegarde de la modification
+            HttpHeaders updateHeaders = new HttpHeaders();
+            updateHeaders.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(quotationData, updateHeaders);
+    
             ResponseEntity<String> updateResponse = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
-
-            if (updateResponse.getStatusCode().is2xxSuccessful()) {
-                System.out.println("Successfully updated price for item " + itemCode + " in Supplier Quotation " + quotationName);
-                return null;
-            } else {
+            if (!updateResponse.getStatusCode().is2xxSuccessful()) {
                 return "Failed to update price: HTTP " + updateResponse.getStatusCode();
             }
+    
+            System.out.println("Successfully updated price for item " + itemCode + " in Supplier Quotation " + quotationName);
+    
+            // Étape 2: Soumettre le document avec run_method=submit
+            String submitUrl = baseUrl + "resource/Supplier Quotation/" + 
+                   URLEncoder.encode(quotationName, StandardCharsets.UTF_8);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            headers.set("Accept", "application/json");
+
+            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+            body.add("run_method", "submit");
+
+            HttpEntity<MultiValueMap<String, String>> submitEntity = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> submitResponse = restTemplate.exchange(
+                submitUrl,
+                HttpMethod.POST,
+                submitEntity,
+                String.class
+            );
+
+    
+            if (submitResponse.getStatusCode().is2xxSuccessful()) {
+                return null; // Succès
+            } else {
+                return "Submit failed: " + submitResponse.getBody();
+            }
+    
         } catch (Exception e) {
-            System.err.println("Error updating price: " + e.getMessage());
-            e.printStackTrace();
-            return "Error updating price: " + e.getMessage();
+            return "Error: " + e.getMessage();
         }
     }
+    
 }

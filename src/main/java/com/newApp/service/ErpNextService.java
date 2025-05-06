@@ -48,7 +48,7 @@ public class ErpNextService {
     }
 
     public String updatePrice(String rfqName, String itemCode, double newPrice, String supplier) {
-        return supplierQuotationService.updatePrice(rfqName, itemCode, newPrice, supplier);
+        return supplierQuotationService.updatePriceAndSubmit(rfqName, itemCode, newPrice, supplier);
     }
 
     public List<Map<String, Object>> getPurchaseOrders(String supplier) {

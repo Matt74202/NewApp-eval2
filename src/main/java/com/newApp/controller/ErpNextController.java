@@ -184,7 +184,7 @@ public class ErpNextController {
     public String updatePrice(@RequestParam String rfqName, @RequestParam String itemCode,
                              @RequestParam double newPrice, @RequestParam String supplier, Model model) {
         try {
-            String result = supplierQuotationService.updatePrice(rfqName, itemCode, newPrice, supplier);
+            String result = supplierQuotationService.updatePriceAndSubmit(rfqName, itemCode, newPrice, supplier);
             if (result == null) {
                 return "redirect:/rfqs?supplier=" + URLEncoder.encode(supplier, StandardCharsets.UTF_8);
             } else {
